@@ -3,7 +3,7 @@ import { MainMenu } from "../scenes/mainmenu.js";
 import { Play } from "../scenes/play.js";
 import { Retry } from "../scenes/retry.js";
 
-var config = {
+const config = {
   type: Phaser.AUTO,
   width: 800,
   height: 600,
@@ -30,4 +30,4 @@ var config = {
   // La primera escena es con la cual empieza el juego
 };
 
-var game = new Phaser.Game(config);
+const game = new Phaser.Game(config);
