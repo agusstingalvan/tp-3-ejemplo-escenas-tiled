@@ -1,7 +1,8 @@
+import Bombs from '../js/objects/Bombs.js'
+import Bomb from '../js/objects/Bomb.js'
+import Player from '../js/objects/Player.js';
 // Declaracion de variables para esta escena
-let player;
 let stars;
-let bombs;
 let cursors;
 let score;
 let gameOver;
@@ -9,6 +10,8 @@ let scoreText;
 
 // Clase Play, donde se crean todos los sprites, el escenario del juego y se inicializa y actualiza toda la logica del juego.
 export class Play extends Phaser.Scene {
+  player;
+  bombs;
   constructor() {
     // Se asigna una key para despues poder llamar a la escena
     super("Play");
@@ -39,23 +42,17 @@ export class Play extends Phaser.Scene {
     worldLayer.setCollisionByProperty({ collides: true });
 
     // tiles marked as colliding
-    /*
-    const debugGraphics = this.add.graphics().setAlpha(0.75);
-    worldLayer.renderDebug(debugGraphics, {
-      tileColor: null, // Color of non-colliding tiles
-      collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
-      faceColor: new Phaser.Display.Color(40, 39, 37, 255), // Color of colliding face edges
-    });
-    */
+    // const debugGraphics = this.add.graphics().setAlpha(0.75);
+    // worldLayer.renderDebug(debugGraphics, {
+    //   tileColor: null, // Color of non-colliding tiles
+    //   collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
+    //   faceColor: new Phaser.Display.Color(40, 39, 37, 255), // Color of colliding face edges
+    // });
 
     // Find in the Object Layer, the name "dude" and get position
     const spawnPoint = map.findObject("Objetos", (obj) => obj.name === "dude");
     // The player and its settings
-    player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "dude");
-
-    //  Player physics properties. Give the little guy a slight bounce.
-    player.setBounce(0.2);
-    player.setCollideWorldBounds(true);
+    this.player = new Player(this, spawnPoint.x, spawnPoint.y, "dude")
 
     //  Input Events
     if ((cursors = !undefined)) {
@@ -83,8 +80,8 @@ export class Play extends Phaser.Scene {
     });
 
     // Create empty group of bombs
-    bombs = this.physics.add.group();
-
+    // bombs = this.physics.add.group();
+    this.bombs = new Bombs(this)
     //  The score
     scoreText = this.add.text(30, 6, "score: 0", {
       fontSize: "32px",
@@ -93,14 +90,13 @@ export class Play extends Phaser.Scene {
 
     // Collide the player and the stars with the platforms
     // REPLACE Add collision with worldLayer
-    this.physics.add.collider(player, worldLayer);
+    this.physics.add.collider(this.player, worldLayer);
     this.physics.add.collider(stars, worldLayer);
-    this.physics.add.collider(bombs, worldLayer);
-
+    this.physics.add.collider(this.bombs, worldLayer);
+    
     //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
-    this.physics.add.overlap(player, stars, this.collectStar, null, this);
-
-    this.physics.add.collider(player, bombs, this.hitBomb, null, this);
+    this.physics.add.overlap(this.player, stars, this.collectStar, null, this);
+    this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
 
     gameOver = false;
     score = 0;
@@ -112,26 +108,21 @@ export class Play extends Phaser.Scene {
     }
 
     if (cursors.left.isDown) {
-      player.setVelocityX(-160);
-
-      player.anims.play("left", true);
+      this.player.runLeft()
     } else if (cursors.right.isDown) {
-      player.setVelocityX(160);
-
-      player.anims.play("right", true);
+      this.player.runRight()
     } else {
-      player.setVelocityX(0);
-
-      player.anims.play("turn");
+      this.player.setVelocityX(0);
+      this.player.anims.play("turn")
     }
 
     // REPLACE player.body.touching.down
-    if (cursors.up.isDown && player.body.blocked.down) {
-      player.setVelocityY(-330);
+    if (cursors.up.isDown && this.player.body.blocked.down) {
+      this.player.jump()
     }
   }
 
-  collectStar(player, star) {
+  collectStar(player, star) {      
     star.disableBody(true, true);
 
     //  Add and update the score
@@ -143,17 +134,11 @@ export class Play extends Phaser.Scene {
       stars.children.iterate(function (child) {
         child.enableBody(true, child.x, child.y + 10, true, true);
       });
-
-      const x =
-        player.x < 400
+    }
+    const x = player.x < 400
           ? Phaser.Math.Between(400, 800)
           : Phaser.Math.Between(0, 400);
-
-      const bomb = bombs.create(x, 16, "bomb");
-      bomb.setBounce(1);
-      bomb.setCollideWorldBounds(true);
-      bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-    }
+    this.bombs.create(new Bomb(this, x, 10, 'bomb'))
   }
 
   hitBomb(player, bomb) {

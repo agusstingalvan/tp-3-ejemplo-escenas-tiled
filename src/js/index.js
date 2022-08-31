@@ -23,7 +23,7 @@ const config = {
     default: "arcade",
     arcade: {
       gravity: { y: 300 },
-      debug: false,
+      debug: true,
     },
   },
   scene: [Preloads, MainMenu, Play, Retry], // Listado de todas las escenas del juego, en orden
